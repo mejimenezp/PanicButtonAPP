@@ -18,7 +18,7 @@ const HomeScreen: React.FC = () => {
 
         setPhone(storedPhone);
         setName(storedName);
-        setIsAdmin(role === "admin"); 
+        //setIsAdmin(role === "admin"); 
         console.log("Tipo de usuario:", role);
       } catch (error) {
         console.error("Error obteniendo datos del usuario:", error);
@@ -41,7 +41,6 @@ const HomeScreen: React.FC = () => {
           onPress: async () => {
             await AsyncStorage.removeItem('userPhone');
             await AsyncStorage.removeItem('userName');
-            await AsyncStorage.removeItem('userRole'); // Borrar también el rol
             Alert.alert("Usuario eliminado", "Debes registrarte nuevamente.");
             router.replace('/register');
           }
@@ -68,24 +67,6 @@ const HomeScreen: React.FC = () => {
         {/* Botón de Pánico */}
         <PanicButton />
 
-        {/* Mostrar opciones solo si el usuario es admin */}
-        {isAdmin && (
-          <View style={styles.adminContainer}>
-            <Text style={styles.adminTitle}>Opciones de Administrador</Text>
-            <TouchableOpacity 
-              style={styles.adminButton} 
-              //onPress={() => router.push('/create-user')}
-            >
-              <Text style={styles.adminButtonText}>Crear Usuario</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.adminButton} 
-              //onPress={() => router.push('/create-contact')}
-            >
-              <Text style={styles.adminButtonText}>Crear Contacto</Text>
-            </TouchableOpacity>
-          </View>
-        )}
       </View>
     </SafeAreaView>
   );
