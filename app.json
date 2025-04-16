@@ -2,15 +2,21 @@
   "expo": {
     "name": "panicbutton",
     "slug": "panicbutton",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mejimenez.panicbutton",
+      "buildNumber": "3",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Tu ubicación será utilizada para enviar una alerta de emergencia a tus contactos."
+      }
     },
+
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",

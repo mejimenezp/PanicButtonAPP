@@ -4,6 +4,7 @@ import {
   Image, 
   TouchableOpacity, 
   Alert, 
+  Text, 
   ActivityIndicator, 
   StyleSheet 
 } from 'react-native';
@@ -16,48 +17,71 @@ const PanicButton: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const sendAlert = async () => {
+    if (loading) return;
     setLoading(true);
 
     try {
-      // Solicitar permisos de ubicación
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('❌ Permiso Denegado', 'Debes permitir el acceso a la ubicación para enviar la alerta.');
-        setLoading(false);
-        return;
-      }
+      const { status } = await Location.getForegroundPermissionsAsync();
 
-      // Obtener ubicación actual
+      if (status !== 'granted') {
+        // Mostrar mensaje explicativo solo si no se ha otorgado permiso aún
+        Alert.alert(
+          'Acceso a tu ubicación',
+          'Tu ubicación solo será utilizada para enviar una alerta de emergencia a tus contactos registrados.',
+          [
+            {
+              text: 'Aceptar',
+              onPress: async () => {
+                const { status: newStatus } = await Location.requestForegroundPermissionsAsync();
+                if (newStatus !== 'granted') {
+                  Alert.alert('❌ Permiso Denegado', 'Debes permitir el acceso a la ubicación para enviar la alerta.');
+                  setLoading(false);
+                  return;
+                } else {
+                  await handleSend();
+                }
+              },
+            },
+            {
+              text: 'Cancelar',
+              style: 'cancel',
+              onPress: () => setLoading(false),
+            },
+          ]
+        );
+      } else {
+        await handleSend();
+      }
+    } catch (error: any) {
+      console.error("Error al enviar la alerta:", error);
+      Alert.alert('❌ Error', `No se pudo enviar la alerta.\n\n${error.message}`);
+      setLoading(false);
+    }
+  };
+
+  const handleSend = async () => {
+    try {
       const location = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.BestForNavigation,
-        mayShowUserSettingsDialog: true,
       });
 
-
-
-
       const phone = await AsyncStorage.getItem('userPhone');
-
       if (!phone) {
         Alert.alert('⚠️ Error', 'No se encontró el número de teléfono registrado.');
-        setLoading(false);
         return;
       }
 
-      // Crear objeto de datos
       const alertData = {
         phone,
         latitude: location.coords.latitude.toString(),
         longitude: location.coords.longitude.toString(),
       };
 
-      // Enviar alerta al backend
       await axios.post(`${API_URL}/panic`, alertData);
-      Alert.alert('✅ Alerta Enviada', 'Tus contactos de emergencia han sido notificados.');
-
+      Alert.alert('✅ Alerta Enviada', 'Se ha enviado un SMS y un Email a tus contactos de emergencia.');
     } catch (error: any) {
-      console.error("Error al enviar la alerta:", error);
-      Alert.alert('❌ Error', `No se pudo enviar la alerta. Inténtalo nuevamente.\n\nDetalles: ${error.message}`);
+      console.error("Error interno:", error);
+      Alert.alert('❌ Error', `No se pudo enviar la alerta.\n\n${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -65,6 +89,10 @@ const PanicButton: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.locationInfo}>
+        ⚠️ Al pulsar el botón de emergencia, tu ubicación será enviada por SMS y/o correo electrónico a tus contactos.
+      </Text>
+
       <TouchableOpacity onPress={sendAlert} style={styles.panicButton} disabled={loading}>
         {loading ? (
           <ActivityIndicator size="large" color="red" />
@@ -77,6 +105,7 @@ const PanicButton: React.FC = () => {
 };
 
 export default PanicButton;
+
 
 
 const styles = StyleSheet.create({
@@ -102,4 +131,15 @@ const styles = StyleSheet.create({
     height: '100%',
     resizeMode: 'contain',
   },
+  locationInfo: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    right: 20,
+    fontSize: 14,
+    textAlign: 'center',
+    color: 'red',
+    fontWeight: 'bold',
+  },
+  
 });
